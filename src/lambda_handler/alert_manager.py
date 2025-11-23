@@ -19,12 +19,8 @@ def check_thresholds_and_alert(findings: Dict[str, any]) -> List[str]:
     """
     Analyzes findings against thresholds and triggers alerts.
     
-    IMPORTANT: The 'findings' dictionary must have these exact keys from Alejandro's metrics_collector:
-    - 'public_s3_buckets': List[str]
-    - 'mfa_compliance': Dict[str, List[str]] with 'compliant' and 'non_compliant' keys
-    - 'security_groups': List[str]
-    - 'cloudtrail_status': Dict[str, bool]
-    - 'failed_logins': int
+    This function checks for common security issues. Adjust thresholds and checks
+    based on what metrics Alejandro implements.
     
     Args:
         findings: Dictionary of collected security metrics from collect_security_metrics()

@@ -32,12 +32,7 @@ def publish_metrics_to_cloudwatch(metrics: Dict[str, any]):
     """
     Publishes custom metrics to CloudWatch.
     
-    IMPORTANT: The 'metrics' dictionary must have these exact keys from Alejandro's metrics_collector:
-    - 'public_s3_buckets': List[str]
-    - 'mfa_compliance': Dict[str, List[str]]
-    - 'security_groups': List[str]
-    - 'cloudtrail_status': Dict[str, bool]
-    - 'failed_logins': int
+    This function handles common metric types. Adjust based on what Alejandro implements.
     
     Args:
         metrics: Dictionary of metrics to publish from collect_security_metrics()
