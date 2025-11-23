@@ -1,0 +1,21 @@
+,,,
+,,,
+Member,Focus Area,What They Code / Build,Output / Deliverable
+Alejandro – Infrastructure & Metrics Architect,"• Define 3–5 security metrics to track (e.g., open security groups, public S3 buckets, CloudTrail status, IAM MFA compliance) • Create CloudWatch Metrics and Logs groups for these",• CloudFormation or Terraform template for CloudWatch Dashboards and metrics • Boto3 scripts to push custom metrics,Architecture diagram + metric collection code + CloudWatch dashboard view
+Nicole – Automation & Alert Engineer,• Build the Lambda function that collects data and analyzes thresholds • Integrate EventBridge or CloudWatch Alarms to trigger alerts • Configure SNS notifications (email or Slack),• Lambda (Python/Node.js) code that runs periodically to check metrics • SNS alert workflow • Demo showing alert triggered,Lambda function repo + alert demo screenshots + CloudWatch rule
+Kelly – Reporting & Visualization Lead,• Automate daily/weekly summary reports • Store aggregated logs in S3 and generate summary via CloudWatch Insights or Athena • Build final dashboard and slides explaining findings,• Python script that compiles JSON/CSV report and emails via SNS or SES • Final CloudWatch dashboard visuals and slide deck,Summary report JSON + final visuals + slides + metrics table
+,,,
+,,,
+,,,
+File / Folder,Purpose,Primary Owner,
+/src/metrics_collector/metrics_collector.py,"Collects 3–5 security metrics via boto3 (S3 public bucket check, IAM MFA status, security groups, CloudTrail logging, login failures).",Alejandro (Infrastructure & Metrics Architect),
+/src/cloudformation/dashboard_setup.yaml,"Defines infrastructure – CloudWatch Dashboard, SNS topic, IAM role, S3 bucket for reports.",Alejandro,
+/src/lambda_handler/lambda_handler.py,"Main Lambda function: imports metrics_collector, runs periodically, pushes metrics to CloudWatch, and calls alerts/report modules.",Nicole (Automation & Alert Engineer),
+/src/lambda_handler/alert_manager.py,Contains SNS alert logic (trigger thresholds → send email or Slack notification).,Nicole,
+/src/reporting/report_generator.py,Generates daily/weekly JSON or CSV summary report from CloudWatch metrics or S3 logs.,Kelly (Reporting & Visualization Lead),
+/src/reporting/email_sender.py,Formats and sends summary reports via SNS/SES.,Kelly,
+/src/utils/aws_helpers.py,"Shared helper functions (for boto3 client creation, logging, error handling).",Nicole,
+/docs/architecture_diagram.png,Visual representation of Lambda workflow and data flow.,Alejandro,
+/docs/metrics_table.xlsx,"Table listing each tracked metric (name, AWS service, threshold, owner).",Kelly,
+/presentation/capstone_slides.pptx,Final presentation deck (10–12 slides with problem → architecture → demo → metrics).,Kelly,
+/demo/demo_walkthrough.md,Step-by-step demo script showing input → Lambda execution → alert → report.,Nicole,

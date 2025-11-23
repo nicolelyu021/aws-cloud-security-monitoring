@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# AWS
+.aws-sam/
+samconfig.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.xlsx
+*.pptx
+*.png
+*.jpg
+*.jpeg
+
+# Secrets
+.env
+*.pem
+*.key
+secrets.json
+
+# Logs
+*.log
+logs/
+
+# Reports (generated)
+reports/*.json
+reports/*.csv
+
