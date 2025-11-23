@@ -1,34 +1,17 @@
 # CloudFormation Template for Security Monitoring Dashboard
 # Owner: Alejandro (Infrastructure & Metrics Architect)
 #
-# IMPLEMENTATION GUIDANCE:
-# This template should define the complete infrastructure for the security monitoring solution.
-# Use the exact resource names and output names specified below to ensure compatibility with
-# Nicole's lambda_handler.py and alert_manager.py.
+# INTERFACE NOTES:
+# For integration, the Lambda function expects these environment variables:
+# - SNS_TOPIC_ARN: ARN of the SNS topic for alerts
+# - REPORTS_BUCKET: Name of S3 bucket for reports
 #
-# REQUIRED RESOURCES:
-# 1. SNS Topic named "MedTechSecurityAlerts" (output: SNSTopicArn)
-# 2. S3 Bucket for reports (output: ReportsBucketName)
-# 3. IAM Role for Lambda with permissions for: CloudWatch, S3, SNS, IAM, EC2, CloudTrail
-# 4. EventBridge Rule for daily schedule (rate(1 day))
-# 5. CloudWatch Dashboard with widgets for all 5 metrics
-#
-# IMPORTANT VARIABLE NAMES:
-# - AlertTopic: SNS Topic resource name
-# - ReportsBucket: S3 Bucket resource name
-# - LambdaExecutionRole: IAM Role resource name
-# - SecurityCheckSchedule: EventBridge Rule resource name
-# - SecurityFunction: Lambda Function resource name (placeholder - code deployed separately)
-#
-# ENVIRONMENT VARIABLES for Lambda:
-# - SNS_TOPIC_ARN: Reference to AlertTopic ARN
-# - REPORTS_BUCKET: Reference to ReportsBucket name
-#
-# This template defines:
-# - CloudWatch Dashboard
+# Suggested resources to include:
 # - SNS Topic for alerts
-# - IAM Role for Lambda
 # - S3 Bucket for reports
+# - IAM Role for Lambda (with permissions for CloudWatch, S3, SNS, IAM, EC2, CloudTrail)
+# - EventBridge Rule for scheduled execution
+# - CloudWatch Dashboard (optional but recommended)
 
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'MedTech Security Monitoring Dashboard Infrastructure'
