@@ -132,16 +132,12 @@ Automated reports include:
 ## Timeline (2 Weeks)
 
 - **Week 1:**
-  - Days 1-2: Infrastructure setup (CloudFormation) and metrics collection implementation
-  - Days 3-4: Lambda automation and alerting implementation
-  - Day 5: Initial integration testing
+  - Infrastructure setup (CloudFormation) and metrics collection implementation
+  - Lambda automation and alerting implementation
+  - Initial integration testing
 
 - **Week 2:**
-  - Days 1-2: Reporting and visualization implementation
-  - Days 3-4: Integration testing, bug fixes, and documentation
-  - Day 5: Presentation preparation and final demo
-
-## Contact
-
-For questions or contributions, please contact the project team members.
+  - Reporting and visualization implementation
+  - Integration testing, bug fixes, and documentation
+  - Presentation preparation and final demo
 
