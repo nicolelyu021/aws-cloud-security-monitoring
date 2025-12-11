@@ -27,6 +27,7 @@ Thumbs.db
 # Project specific
 *.xlsx
 *.pptx
+!demo/*.png
 *.png
 *.jpg
 *.jpeg
