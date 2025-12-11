@@ -41,20 +41,37 @@ def publish_metrics_to_cloudwatch(metrics: Dict[str, any]):
         cloudwatch = get_boto3_client('cloudwatch')
         metric_data = []
         
-        # Publish public S3 buckets count
-        public_buckets_count = len(metrics.get('public_s3_buckets', []))
+        # Publish public S3 buckets count (from exposure dict)
+        exposure = metrics.get('exposure', {})
+        public_buckets_count = len(exposure.get('public_s3_buckets', []))
         metric_data.append({
             'MetricName': 'PublicS3Buckets',
             'Value': public_buckets_count,
             'Unit': 'Count'
         })
         
-        # Publish MFA non-compliance count
-        mfa_compliance = metrics.get('mfa_compliance', {})
-        non_compliant_count = len(mfa_compliance.get('non_compliant', []))
+        # Publish public EC2 IPs count (from exposure dict)
+        public_ec2_count = len(exposure.get('public_ec2_IPs', []))
+        metric_data.append({
+            'MetricName': 'PublicEC2Instances',
+            'Value': public_ec2_count,
+            'Unit': 'Count'
+        })
+        
+        # Publish MFA non-compliance count (from mfa_iam dict)
+        mfa_iam = metrics.get('mfa_iam', {})
+        non_compliant_count = len(mfa_iam.get('non_compliant_users', []))
         metric_data.append({
             'MetricName': 'MFANonCompliantUsers',
             'Value': non_compliant_count,
+            'Unit': 'Count'
+        })
+        
+        # Publish total IAM users count
+        total_users = mfa_iam.get('total_users', 0)
+        metric_data.append({
+            'MetricName': 'TotalIAMUsers',
+            'Value': total_users,
             'Unit': 'Count'
         })
         
@@ -66,20 +83,11 @@ def publish_metrics_to_cloudwatch(metrics: Dict[str, any]):
             'Unit': 'Count'
         })
         
-        # Publish CloudTrail logging status (1 if all logging, 0 if any not logging)
-        cloudtrail_status = metrics.get('cloudtrail_status', {})
-        all_logging = 1 if cloudtrail_status and all(cloudtrail_status.values()) else 0
+        # Publish unencrypted EBS volumes count
+        unencrypted_volumes_count = len(metrics.get('encryption', []))
         metric_data.append({
-            'MetricName': 'CloudTrailAllLogging',
-            'Value': all_logging,
-            'Unit': 'None'
-        })
-        
-        # Publish failed logins count
-        failed_logins = metrics.get('failed_logins', 0)
-        metric_data.append({
-            'MetricName': 'FailedLoginAttempts',
-            'Value': failed_logins,
+            'MetricName': 'UnencryptedEBSVolumes',
+            'Value': unencrypted_volumes_count,
             'Unit': 'Count'
         })
         

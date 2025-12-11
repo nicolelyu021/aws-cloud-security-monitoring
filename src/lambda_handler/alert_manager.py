@@ -35,54 +35,56 @@ def check_thresholds_and_alert(findings: Dict[str, any]) -> List[str]:
         handle_error(Exception("SNS_TOPIC_ARN environment variable not set"), "check_thresholds_and_alert")
         return risks
     
-    # Check for public S3 buckets
-    if findings.get('public_s3_buckets') and len(findings['public_s3_buckets']) > 0:
-        risk_msg = f"ALERT: {len(findings['public_s3_buckets'])} public S3 bucket(s) detected: {', '.join(findings['public_s3_buckets'])}"
+    # Check for public S3 buckets (from exposure dict)
+    exposure = findings.get('exposure', {})
+    public_buckets = exposure.get('public_s3_buckets', [])
+    if public_buckets and len(public_buckets) > 0:
+        risk_msg = f"ALERT: {len(public_buckets)} public S3 bucket(s) detected: {', '.join(public_buckets)}"
         risks.append(risk_msg)
         send_alert(
             subject="Security Alert: Public S3 Buckets Detected",
             message=risk_msg
         )
     
-    # Check for MFA non-compliance
-    mfa_compliance = findings.get('mfa_compliance', {})
-    non_compliant = mfa_compliance.get('non_compliant', [])
-    if non_compliant and len(non_compliant) > 0:
-        risk_msg = f"ALERT: {len(non_compliant)} IAM user(s) without MFA: {', '.join(non_compliant)}"
+    # Check for public EC2 IPs (from exposure dict)
+    public_ec2_ips = exposure.get('public_ec2_IPs', [])
+    if public_ec2_ips and len(public_ec2_ips) > 0:
+        risk_msg = f"ALERT: {len(public_ec2_ips)} EC2 instance(s) with public IPs detected: {', '.join(public_ec2_ips)}"
+        risks.append(risk_msg)
+        send_alert(
+            subject="Security Alert: Public EC2 Instances Detected",
+            message=risk_msg
+        )
+    
+    # Check for MFA non-compliance (from mfa_iam dict)
+    mfa_iam = findings.get('mfa_iam', {})
+    non_compliant_users = mfa_iam.get('non_compliant_users', [])
+    if non_compliant_users and len(non_compliant_users) > 0:
+        risk_msg = f"ALERT: {len(non_compliant_users)} IAM user(s) without MFA: {', '.join(non_compliant_users)}"
         risks.append(risk_msg)
         send_alert(
             subject="Security Alert: MFA Non-Compliance Detected",
             message=risk_msg
         )
     
-    # Check for risky security groups
-    if findings.get('security_groups') and len(findings['security_groups']) > 0:
-        risk_msg = f"ALERT: {len(findings['security_groups'])} security group(s) with risky rules (0.0.0.0/0): {', '.join(findings['security_groups'])}"
+    # Check for risky security groups (list of dicts)
+    security_groups = findings.get('security_groups', [])
+    if security_groups and len(security_groups) > 0:
+        sg_ids = [sg.get('SecurityGroupId', 'Unknown') for sg in security_groups]
+        risk_msg = f"ALERT: {len(security_groups)} security group(s) with risky rules (0.0.0.0/0): {', '.join(sg_ids)}"
         risks.append(risk_msg)
         send_alert(
             subject="Security Alert: Risky Security Groups Detected",
             message=risk_msg
         )
     
-    # Check CloudTrail status
-    cloudtrail_status = findings.get('cloudtrail_status', {})
-    if cloudtrail_status:
-        non_logging_trails = [trail for trail, is_logging in cloudtrail_status.items() if not is_logging]
-        if non_logging_trails:
-            risk_msg = f"ALERT: {len(non_logging_trails)} CloudTrail(s) not logging: {', '.join(non_logging_trails)}"
-            risks.append(risk_msg)
-            send_alert(
-                subject="Security Alert: CloudTrail Not Logging",
-                message=risk_msg
-            )
-    
-    # Check for excessive failed logins (threshold: > 10)
-    failed_logins = findings.get('failed_logins', 0)
-    if failed_logins > 10:
-        risk_msg = f"ALERT: {failed_logins} failed login attempts detected in last 24 hours (threshold: 10)"
+    # Check for unencrypted EBS volumes
+    unencrypted_volumes = findings.get('encryption', [])
+    if unencrypted_volumes and len(unencrypted_volumes) > 0:
+        risk_msg = f"ALERT: {len(unencrypted_volumes)} unencrypted EBS volume(s) detected: {', '.join(unencrypted_volumes)}"
         risks.append(risk_msg)
         send_alert(
-            subject="Security Alert: Excessive Failed Login Attempts",
+            subject="Security Alert: Unencrypted EBS Volumes Detected",
             message=risk_msg
         )
     
