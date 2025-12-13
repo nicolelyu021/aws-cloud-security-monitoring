@@ -58,6 +58,9 @@ def generate_daily_report(metrics: Dict[str, any]) -> Dict[str, any]:
     encryption = metrics.get("encryption", [])
     exposure = metrics.get("exposure", {})
     security_groups = metrics.get("security_groups", [])
+    # CloudTrail and login_attempts disabled for presentation consistency
+    # cloudtrail = metrics.get("cloudtrail", {})
+    # login_attempts = metrics.get("login_attempts", {})
 
     non_compliant_users = mfa_iam.get("non_compliant_users", [])
     total_users = mfa_iam.get("total_users", 0)
@@ -87,6 +90,17 @@ def generate_daily_report(metrics: Dict[str, any]) -> Dict[str, any]:
                 "risky_sg_count": len(security_groups),
                 "risky_sg_details": security_groups,
             },
+            # "cloudtrail": {  # Disabled for presentation
+            #     "cloudtrail_enabled": cloudtrail.get("cloudtrail_enabled", False),
+            #     "active_trails": cloudtrail.get("active_trails", []),
+            #     "inactive_trails": cloudtrail.get("inactive_trails", []),
+            #     "total_trails": cloudtrail.get("total_trails", 0),
+            # },
+            # "login_attempts": {  # Disabled for presentation
+            #     "failed_login_count": login_attempts.get("failed_login_count", 0),
+            #     "failed_logins": login_attempts.get("failed_logins", []),
+            #     "period_hours": login_attempts.get("period_hours", 24),
+            # },
         },
     }
 
@@ -114,12 +128,19 @@ def generate_weekly_report(metrics_list: List[Dict[str, any]]) -> Dict[str, any]
     all_risky_sg_ids = set()
 
     total_users_last_day = 0  # keep last observed total_users as context
+    
+    # CloudTrail and login_attempts variables disabled for presentation
+    # all_cloudtrail_enabled_days = 0
+    # all_failed_logins = []
 
     for day in metrics_list:
         mfa_iam = day.get("mfa_iam", {})
         encryption = day.get("encryption", [])
         exposure = day.get("exposure", {})
         security_groups = day.get("security_groups", [])
+        # CloudTrail and login_attempts disabled for presentation
+        # cloudtrail = day.get("cloudtrail", {})
+        # login_attempts = day.get("login_attempts", {})
 
         # IAM
         total_users_last_day = mfa_iam.get("total_users", total_users_last_day)
@@ -137,6 +158,11 @@ def generate_weekly_report(metrics_list: List[Dict[str, any]]) -> Dict[str, any]
             sg_id = sg.get("SecurityGroupId")
             if sg_id:
                 all_risky_sg_ids.add(sg_id)
+        
+        # CloudTrail and login_attempts disabled for presentation
+        # if cloudtrail.get("cloudtrail_enabled", False):
+        #     all_cloudtrail_enabled_days += 1
+        # all_failed_logins.extend(login_attempts.get("failed_logins", []))
 
     report = {
         "generated_at": datetime.utcnow().isoformat(),
@@ -161,6 +187,14 @@ def generate_weekly_report(metrics_list: List[Dict[str, any]]) -> Dict[str, any]
                 "unique_risky_sg_ids": list(all_risky_sg_ids),
                 "unique_risky_sg_count": len(all_risky_sg_ids),
             },
+            # "cloudtrail": {  # Disabled for presentation
+            #     "days_enabled": all_cloudtrail_enabled_days,
+            #     "days_checked": len(metrics_list),
+            # },
+            # "login_attempts": {  # Disabled for presentation
+            #     "total_failed_logins": len(all_failed_logins),
+            #     "unique_failed_logins": all_failed_logins,
+            # },
         },
     }
 

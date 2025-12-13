@@ -91,6 +91,29 @@ def publish_metrics_to_cloudwatch(metrics: Dict[str, any]):
             'Unit': 'Count'
         })
         
+        # CloudTrail and login_attempts metrics are disabled for presentation
+        # Uncomment below to enable (will change from 6 to 9 metrics):
+        # cloudtrail = metrics.get('cloudtrail', {})
+        # cloudtrail_enabled = 1 if cloudtrail.get('cloudtrail_enabled', False) else 0
+        # metric_data.append({
+        #     'MetricName': 'CloudTrailEnabled',
+        #     'Value': cloudtrail_enabled,
+        #     'Unit': 'Count'
+        # })
+        # active_trails_count = len(cloudtrail.get('active_trails', []))
+        # metric_data.append({
+        #     'MetricName': 'CloudTrailActiveTrails',
+        #     'Value': active_trails_count,
+        #     'Unit': 'Count'
+        # })
+        # login_attempts = metrics.get('login_attempts', {})
+        # failed_login_count = login_attempts.get('failed_login_count', 0)
+        # metric_data.append({
+        #     'MetricName': 'FailedLoginAttempts',
+        #     'Value': failed_login_count,
+        #     'Unit': 'Count'
+        # })
+        
         # Publish all metrics in a single call
         if metric_data:
             cloudwatch.put_metric_data(

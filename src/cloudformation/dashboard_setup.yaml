@@ -1,17 +1,216 @@
-# CloudFormation Template for Security Monitoring Dashboard
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'MedTech Security Monitoring Infrastructure - CloudFormation Template'
 # Owner: Alejandro (Infrastructure & Metrics Architect)
-#
-# INTERFACE NOTES:
-# For integration, the Lambda function expects these environment variables:
-# - SNS_TOPIC_ARN: ARN of the SNS topic for alerts
-# - REPORTS_BUCKET: Name of S3 bucket for reports
-#
-# Suggested resources to include:
-# - SNS Topic for alerts
-# - S3 Bucket for reports
-# - IAM Role for Lambda (with permissions for CloudWatch, S3, SNS, IAM, EC2, CloudTrail)
-# - EventBridge Rule for scheduled execution
-# - CloudWatch Dashboard (optional but recommended)
-#
-# TODO: Alejandro - Create your CloudFormation template here
+# Completed by: Nicole (with Alejandro's approval)
+
+Parameters:
+  EmailAddress:
+    Type: String
+    Description: Email address for SNS alerts
+    Default: security@medtech.com
+  
+  LambdaFunctionName:
+    Type: String
+    Description: Name of the existing Lambda function
+    Default: medtech-security-monitor
+  
+  ScheduleExpression:
+    Type: String
+    Description: EventBridge schedule expression (e.g., rate(1 day) or cron(0 9 * * ? *))
+    Default: rate(1 day)
+
+Resources:
+  # SNS Topic for Security Alerts
+  SecurityAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: security-alerts
+      DisplayName: MedTech Security Alerts
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref EmailAddress
+
+  # S3 Bucket for Reports Storage
+  ReportsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-security-reports-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldReports
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags:
+        - Key: Purpose
+          Value: SecurityReports
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # IAM Role for Lambda Function
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: MedTechSecurityMonitoringRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: MedTechSecurityMonitoringPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # CloudWatch Logs
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              # CloudWatch Metrics
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    'cloudwatch:Namespace': MedTech/Security
+              # SNS
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref SecurityAlertsTopic
+              # EC2
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeVolumes
+                  - ec2:DescribeSecurityGroups
+                Resource: '*'
+              # S3
+              - Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                  - s3:GetBucketAcl
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource:
+                  - !Sub '${ReportsBucket}/*'
+                  - !Sub '${ReportsBucket}'
+                  - 'arn:aws:s3:::*'
+              # IAM
+              - Effect: Allow
+                Action:
+                  - iam:ListUsers
+                  - iam:ListMFADevices
+                Resource: '*'
+              # CloudTrail
+              - Effect: Allow
+                Action:
+                  - cloudtrail:ListTrails
+                  - cloudtrail:GetTrailStatus
+                  - cloudtrail:LookupEvents
+                Resource: '*'
+              # CloudWatch Logs Insights (for login attempts)
+              - Effect: Allow
+                Action:
+                  - logs:StartQuery
+                  - logs:GetQueryResults
+                Resource: '*'
+
+  # EventBridge Rule for Scheduled Execution
+  SecurityMonitoringSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: medtech-security-monitoring-schedule
+      Description: Scheduled execution of security monitoring Lambda
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Arn: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}'
+          Id: SecurityMonitoringTarget
+          Input: '{}'
+
+  # CloudWatch Dashboard
+  SecurityDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: MedTech-Security-Monitoring
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  [ "MedTech/Security", "PublicS3Buckets", { "stat": "Average" } ],
+                  [ "MedTech/Security", "PublicEC2Instances", { "stat": "Average" } ],
+                  [ "MedTech/Security", "MFANonCompliantUsers", { "stat": "Average" } ],
+                  [ "MedTech/Security", "RiskySecurityGroups", { "stat": "Average" } ],
+                  [ "MedTech/Security", "UnencryptedEBSVolumes", { "stat": "Average" } ],
+                  [ "MedTech/Security", "CloudTrailEnabled", { "stat": "Average" } ],
+                  [ "MedTech/Security", "FailedLoginAttempts", { "stat": "Sum" } ]
+                ],
+                "period": 3600,
+                "stat": "Average",
+                "region": "${AWS::Region}",
+                "title": "Security Metrics Overview"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  [ "MedTech/Security", "TotalIAMUsers", { "stat": "Average" } ],
+                  [ "MedTech/Security", "CloudTrailActiveTrails", { "stat": "Average" } ]
+                ],
+                "period": 3600,
+                "stat": "Average",
+                "region": "${AWS::Region}",
+                "title": "IAM and CloudTrail Status"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  SNSTopicArn:
+    Description: ARN of the SNS topic for security alerts
+    Value: !Ref SecurityAlertsTopic
+    Export:
+      Name: !Sub '${AWS::StackName}-SNS-Topic-ARN'
+
+  ReportsBucketName:
+    Description: Name of the S3 bucket for storing reports
+    Value: !Ref ReportsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-Reports-Bucket-Name'
+
+  LambdaRoleArn:
+    Description: ARN of the IAM role for Lambda execution
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-Lambda-Role-ARN'
+
+  EventBridgeRuleArn:
+    Description: ARN of the EventBridge rule for scheduled execution
+    Value: !GetAtt SecurityMonitoringSchedule.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-EventBridge-Rule-ARN'
+
+  DashboardURL:
+    Description: URL to the CloudWatch Dashboard
+    Value: !Sub 'https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=MedTech-Security-Monitoring'
 

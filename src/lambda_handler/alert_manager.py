@@ -88,6 +88,33 @@ def check_thresholds_and_alert(findings: Dict[str, any]) -> List[str]:
             message=risk_msg
         )
     
+    # CloudTrail and login_attempts alerts are disabled for presentation
+    # Uncomment below to enable:
+    # cloudtrail = findings.get('cloudtrail', {})
+    # if not cloudtrail.get('cloudtrail_enabled', False):
+    #     risk_msg = f"ALERT: CloudTrail logging is NOT enabled. Active trails: {len(cloudtrail.get('active_trails', []))}, Inactive trails: {len(cloudtrail.get('inactive_trails', []))}"
+    #     risks.append(risk_msg)
+    #     send_alert(
+    #         subject="Security Alert: CloudTrail Not Enabled",
+    #         message=risk_msg
+    #     )
+    # login_attempts = findings.get('login_attempts', {})
+    # failed_login_count = login_attempts.get('failed_login_count', 0)
+    # if failed_login_count > 0:
+    #     failed_logins = login_attempts.get('failed_logins', [])
+    #     login_summary = "\n".join([
+    #         f"  - {login.get('user', 'Unknown')} from {login.get('source_ip', 'Unknown')} at {login.get('time', 'Unknown')}"
+    #         for login in failed_logins[:5]
+    #     ])
+    #     if len(failed_logins) > 5:
+    #         login_summary += f"\n  ... and {len(failed_logins) - 5} more"
+    #     risk_msg = f"ALERT: {failed_login_count} failed login attempt(s) detected in last 24 hours:\n{login_summary}"
+    #     risks.append(risk_msg)
+    #     send_alert(
+    #         subject="Security Alert: Failed Login Attempts Detected",
+    #         message=risk_msg
+    #     )
+    
     return risks
 
 
