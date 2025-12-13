@@ -1,143 +1,83 @@
-# AWS Cloud Security Monitoring
+# AWS Cloud Security Monitoring Dashboard
 
-## Project Overview
+An enterprise-grade serverless security monitoring solution that provides automated compliance tracking, real-time threat detection, and comprehensive security reporting for AWS infrastructure. This production-ready system delivers continuous visibility into security posture through automated metric collection, intelligent threshold analysis, and proactive alerting.
 
-This project implements a Security Monitoring Dashboard for MedTech's AI infrastructure, providing automated tracking of security metrics, real-time alerts, and comprehensive reporting capabilities. The solution follows AWS Well-Architected Framework principles and automates security compliance monitoring.
+## Overview
 
-## Project Scope
+This security monitoring system addresses the critical need for continuous security compliance monitoring in cloud environments. Built using serverless architecture principles, the solution automatically scales to handle varying workloads while maintaining minimal operational overhead. The system continuously tracks security best practices across IAM, S3, EC2, and security groups, providing security teams with actionable insights and immediate notifications when violations are detected.
 
-This solution implements **Option C: Security Monitoring Dashboard** with the following capabilities:
-- Track 3-5 security metrics (e.g., public S3 buckets, IAM MFA compliance, security group rules, CloudTrail status)
-- CloudWatch dashboard visualization
-- Automated alerts on threshold violations
-- Daily/weekly summary reports
+The architecture leverages AWS managed services to ensure high availability and reliability. EventBridge schedules trigger Lambda functions for automated metric collection, eliminating the need for dedicated infrastructure. All collected metrics are published to CloudWatch for real-time visualization, while comprehensive reports are generated and stored in S3 for historical analysis and audit purposes.
 
-## Team Structure
+## Architecture
 
-### Alejandro - Infrastructure & Metrics Architect
-- Define 3-5 security metrics to track
-- Create CloudWatch Metrics and Logs groups
-- CloudFormation templates for infrastructure setup
-- Architecture diagrams
+The system follows an event-driven, serverless architecture pattern that ensures scalability and cost-effectiveness. The core orchestration is handled by an AWS Lambda function that is triggered on a scheduled basis by Amazon EventBridge. This Lambda function coordinates metric collection, analysis, alerting, and reporting through a modular codebase structure.
 
-### Nicole - Automation & Alert Engineer
-- Lambda function for metric collection and analysis
-- EventBridge/CloudWatch Alarms integration
-- SNS notification workflows
-- Alert management logic
+![System Architecture](docs/implementation-design.png)
 
-### Kelly - Reporting & Visualization Lead
-- Automated daily/weekly summary reports
-- S3 storage for aggregated logs
-- CloudWatch dashboard visuals
-- Final presentation deck
+The architecture diagram above illustrates the complete data flow. The Lambda function serves as the central orchestrator, invoking specialized Python modules for different responsibilities. The metrics collector module queries AWS IAM, EC2, and S3 services to gather security-related data. Collected metrics are then published to CloudWatch for dashboard visualization, analyzed for threshold violations, and used to generate comprehensive reports stored in S3. When security violations are detected, the alert manager sends notifications through SNS to subscribed endpoints.
 
-## Project Structure
+This design ensures separation of concerns, with each module handling a specific responsibility. The shared utilities module provides common functionality for AWS API interactions, error handling, and logging, promoting code reuse and maintainability.
 
-```
-aws-cloud-security-monitoring/
-├── src/
-│   ├── metrics_collector/
-│   │   └── metrics_collector.py          # Collects security metrics via boto3
-│   ├── cloudformation/
-│   │   └── dashboard_setup.yaml          # Infrastructure as Code (CloudWatch, SNS, IAM, S3)
-│   ├── lambda_handler/
-│   │   ├── lambda_handler.py             # Main Lambda function entry point
-│   │   └── alert_manager.py              # SNS alert logic and threshold management
-│   ├── reporting/
-│   │   ├── report_generator.py            # Generates JSON/CSV summary reports
-│   │   └── email_sender.py               # Formats and sends reports via SNS/SES
-│   └── utils/
-│       └── aws_helpers.py                # Shared helper functions (boto3, logging, error handling)
-├── docs/
-│   ├── architecture_diagram.png           # Visual representation of workflow
-│   └── metrics_table.xlsx                # Metrics documentation
-├── presentation/
-│   └── capstone_slides.pptx              # Final presentation deck
-├── demo/
-│   └── demo_walkthrough.md               # Step-by-step demo script
-└── README.md
+## Security Metrics
 
-```
+The system monitors four primary metric categories, tracking six key security indicators that align with AWS security best practices. The IAM Security category monitors MFA compliance across all IAM users, identifying accounts that lack multi-factor authentication. The Data Encryption category tracks EBS volume encryption compliance, flagging any unencrypted volumes that could expose sensitive data.
 
-## Key Components
+The Exposure Risks category identifies potential data exposure by detecting public S3 buckets and EC2 instances with public IP addresses. Finally, the Network Security category analyzes security group rules to identify risky configurations, such as rules that allow access from anywhere (0.0.0.0/0) or expose sensitive ports.
+
+Each metric is collected using direct API calls through the Boto3 SDK, ensuring accurate and up-to-date information. The metrics are then evaluated against configurable thresholds to determine if security violations have occurred.
+
+## Core Components
 
 ### Metrics Collection
-The `metrics_collector.py` module implements security checks for:
-- Public S3 bucket detection
-- IAM MFA compliance status
-- Security group rule analysis
-- CloudTrail logging status
-- Failed login attempts
 
-### Lambda Function
-The main Lambda handler orchestrates:
-1. Metric collection from AWS services
-2. Threshold analysis and risk assessment
-3. Alert triggering via SNS
-4. Metric publishing to CloudWatch
+The metrics collection module implements comprehensive security checks using AWS APIs. Built with Boto3, the module makes direct API calls to EC2, S3, and IAM services to gather security-related information. The implementation includes robust error handling and logging to ensure reliability even when individual API calls fail. Each security check is implemented as a separate function, making the codebase modular and maintainable.
 
-### Alerting System
-Automated alerts are triggered when:
-- Security metrics exceed defined thresholds
-- Critical security findings are detected
-- Compliance violations occur
+### Lambda Orchestration
 
-### Reporting
-Automated reports include:
-- Daily summary of security metrics
-- Weekly aggregated compliance status
-- Trend analysis and recommendations
+The main Lambda handler serves as the execution engine that coordinates all system operations. When triggered by EventBridge, it first collects metrics from multiple AWS services through the metrics collector module. The collected data is then analyzed against predefined thresholds to identify security risks. Metrics are published to CloudWatch for real-time dashboard visualization, and if violations are detected, alerts are triggered through SNS. Optionally, comprehensive reports can be generated and stored in S3, controlled through environment variable configuration.
+
+### Alert Management
+
+The alert management system implements intelligent threshold-based alerting. Each metric type has configurable thresholds that determine when alerts should be triggered. When violations are detected, the system formats structured alert messages with actionable details and sends them through SNS, enabling multi-channel notifications to email, SMS, or other subscribed endpoints.
+
+### Reporting System
+
+The reporting module generates automated security reports in JSON format. Daily reports provide timestamped snapshots of the current security posture, while weekly reports aggregate data over time to identify trends and patterns. All reports are stored in S3 with date-based organization, enabling easy retrieval and analysis. The reporting functionality is designed to be optional, controlled through environment variables to maintain flexibility.
+
+### Infrastructure as Code
+
+The complete infrastructure is defined in a CloudFormation template, enabling repeatable and version-controlled deployments. The template provisions all necessary AWS resources including an SNS topic for alert notifications, an S3 bucket with encryption enabled for report storage, IAM roles with least-privilege permissions, an EventBridge rule for scheduled execution, and a CloudWatch dashboard with pre-configured widgets for metric visualization.
+
+## Technology Stack
+
+The solution is built entirely on AWS managed services, ensuring high availability and eliminating infrastructure management overhead. Python 3.9+ serves as the runtime for Lambda functions, with the Boto3 SDK providing AWS service integration. Infrastructure is defined using CloudFormation YAML templates, following Infrastructure as Code best practices. The system integrates with AWS Lambda for compute, CloudWatch for monitoring, EventBridge for scheduling, SNS for notifications, S3 for storage, IAM for security, and CloudTrail for audit logging.
 
 ## Deployment
 
-### Prerequisites
-- AWS CLI configured with appropriate credentials
-- Python 3.9+ (for Lambda functions)
-- CloudFormation or SAM CLI for infrastructure deployment
+Deployment begins with the CloudFormation template, which provisions all necessary AWS resources in a single operation. The template creates the SNS topic, S3 bucket, IAM roles, EventBridge rule, and CloudWatch dashboard. Once the infrastructure is deployed, the Lambda function code is packaged with its dependencies and uploaded to AWS Lambda. Environment variables are configured to specify the SNS topic ARN for alerts and optionally the S3 bucket name for report storage.
 
-### Setup Steps
-1. Deploy infrastructure using CloudFormation template
-2. Configure SNS topic subscriptions (email/Slack)
-3. Deploy Lambda function with required IAM permissions
-4. Set up EventBridge rule for scheduled execution
-5. Configure CloudWatch dashboard
+The Lambda function is configured to use the IAM execution role created by CloudFormation, which has been granted the minimum permissions necessary for the system to operate. The EventBridge rule triggers the Lambda function on a schedule, typically daily or hourly depending on monitoring requirements. After deployment, the CloudWatch dashboard provides immediate visibility into the collected metrics.
 
-## AWS Services Used
+## Monitoring and Observability
 
-- **AWS Lambda**: Core automation engine
-- **Amazon CloudWatch**: Metrics, logs, and dashboards
-- **Amazon EventBridge**: Scheduled execution triggers
-- **Amazon SNS**: Alert notifications
-- **Amazon S3**: Report storage
-- **AWS IAM**: Security and access control
-- **AWS CloudFormation**: Infrastructure as Code
+The system provides comprehensive observability through multiple channels. CloudWatch dashboards offer real-time visualization of all security metrics, enabling security teams to quickly assess the current security posture. CloudWatch Logs capture detailed execution logs for troubleshooting and audit purposes, with structured logging that facilitates analysis.
 
-## Security Considerations
+SNS notifications provide immediate alerts when security violations are detected, ensuring that security teams are promptly informed of critical issues. The S3 report storage serves as a historical record of security compliance, enabling trend analysis and supporting audit requirements. All API calls are logged through CloudTrail, providing a complete audit trail of system operations.
 
-- Least privilege IAM roles for Lambda execution
-- Encrypted S3 buckets for report storage
-- Secure SNS topic policies
-- CloudTrail logging for audit trails
-- Error handling and retry logic
+## Security Best Practices
 
-## Deliverables
+The implementation follows AWS security best practices throughout. IAM roles are configured with least-privilege principles, granting only the minimum permissions necessary for each component to function. The S3 bucket used for report storage has encryption enabled to protect sensitive security data. SNS topic policies restrict access to authorized subscribers, preventing unauthorized access to alert notifications.
 
-1. **Code Repository**: Complete implementation with all modules
-2. **Infrastructure Templates**: CloudFormation/SAM deployment files
-3. **Documentation**: Architecture diagrams and metrics documentation
-4. **Presentation**: 10-12 slide deck with demo walkthrough
-5. **Demo**: Live or screenshot-based demonstration
+All system operations are logged through CloudTrail, providing a complete audit trail for compliance and security reviews. The codebase includes comprehensive error handling to ensure graceful degradation when individual components fail, preventing system-wide outages from isolated failures.
 
-## Timeline (2 Weeks)
+## Project Context
 
-- **Week 1:**
-  - Infrastructure setup (CloudFormation) and metrics collection implementation
-  - Lambda automation and alerting implementation
-  - Initial integration testing
+This project was developed as part of the CMU 95-746 Cloud Security capstone course, demonstrating practical application of cloud security principles and serverless architecture design. The implementation showcases production-ready code with proper error handling, logging, and observability. The system demonstrates Infrastructure as Code principles through the complete CloudFormation template, automated reporting and alerting capabilities, and integration with multiple AWS services.
 
-- **Week 2:**
-  - Reporting and visualization implementation
-  - Integration testing, bug fixes, and documentation
-  - Presentation preparation and final demo
+The modular codebase structure and comprehensive documentation reflect software engineering best practices, making the codebase maintainable and extensible. The system is designed to be easily extended with additional security metrics or enhanced with more sophisticated analysis capabilities.
 
+## Project Structure
+
+The codebase is organized into logical modules that separate concerns and promote maintainability. The metrics collector module handles all security metric collection logic, while the Lambda handler coordinates overall execution. The alert manager implements threshold analysis and notification logic, and the reporting module handles report generation and storage. Shared utilities provide common functionality for AWS interactions, error handling, and logging.
+
+The CloudFormation template defines the complete infrastructure in a single file, enabling version-controlled infrastructure deployments. Documentation and demo materials are organized in dedicated directories, keeping the repository structure clean and navigable.

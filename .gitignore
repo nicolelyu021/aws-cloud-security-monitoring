@@ -24,14 +24,6 @@ samconfig.toml
 .DS_Store
 Thumbs.db
 
-# Project specific
-*.xlsx
-*.pptx
-!demo/*.png
-*.png
-*.jpg
-*.jpeg
-
 # Secrets
 .env
 *.pem
@@ -42,7 +34,4 @@ secrets.json
 *.log
 logs/
 
-# Reports (generated)
-reports/*.json
-reports/*.csv
 
