@@ -34,4 +34,6 @@ secrets.json
 *.log
 logs/
 
+# Internal Track Status
+project-status/
 
