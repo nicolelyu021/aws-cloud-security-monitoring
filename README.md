@@ -1,4 +1,4 @@
-# AWS Cloud Security Monitoring for MetTech
+# AWS Cloud Security Monitoring for MedTech
 
 An enterprise-grade serverless security monitoring solution that provides automated compliance tracking, real-time threat detection, and comprehensive security reporting for AWS infrastructure. This production-ready system delivers continuous visibility into security posture through automated metric collection, intelligent threshold analysis, and proactive alerting.
 
